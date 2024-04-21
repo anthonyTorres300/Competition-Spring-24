@@ -7,6 +7,19 @@ import imutils
 
 from Water_pump import Water_pump
 
+
+def get_lat_long():
+    from geocoder import ip
+    from datetime import datetime
+    g = ip('me')
+    # Get the current time in ISO 8601 format
+    current_time = datetime.now()
+    current_time_iso8601 = current_time.strftime("%H:%M:%SZ")
+    if g.latlng:
+        return g.latlng[0], g.latlng[1], current_time_iso8601
+    else:
+        pass
+
 #initialize the water pump shooter
 water_shooter = Water_pump()
 
@@ -83,11 +96,11 @@ with depthai.Device(pipeline) as device:
                 for markerID in ids:
 			
                     if (markerID == 11):
-                        print("Friendly spotted")
                         water_shooter.stop_shooting()
                     else:
                         water_shooter.shoot()
-                        print("Enemy spotted")
+                        lat, lon, time = get_lat_long()
+                        print(f"RTXDC_2024_UPRM_LIDRON_UAV_WaterBlast!_{markerID}_{time}_{lat}_{lon}")
 		
             
         key = cv2.waitKey(1) & 0xFF
