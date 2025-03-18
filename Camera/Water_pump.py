@@ -63,6 +63,10 @@ class Water_pump:
 
 if __name__ == "__main__":
     water_shooter = Water_pump()
-    water_shooter.shoot()
-    water_shooter.stop_shooting()
+    water_shooter.set_pins([26]) #turn on the third relay
+    try:
+        while True:
+            water_shooter.shoot()
+    except:
+        water_shooter.stop_shooting()
     

@@ -5,6 +5,8 @@ import depthai
 # Necessary imports for ArUco detection
 import imutils
 
+import time
+
 from Water_pump import Water_pump
 
 
@@ -66,6 +68,8 @@ with depthai.Device(pipeline) as device:
     frame = None
     detections = []
 
+    splashed_enemies = []
+
     # Main host-side application loop
     while True:
         # we try to fetch the data from nn/rgb queues. tryGet will return either the data packet or None if there isn't any
@@ -94,14 +98,23 @@ with depthai.Device(pipeline) as device:
                 ids = ids.flatten()
 		        # loop over the detected ArUCo corners
                 for markerID in ids:
-			
                     if (markerID == 11):
                         water_shooter.stop_shooting()
+                        print("Friendly detcted")
                     else:
-                        water_shooter.shoot()
-                        lat, lon, time = get_lat_long()
-                        print(f"RTXDC_2024_UPRM_LIDRON_UAV_WaterBlast!_{markerID}_{time}_{lat}_{lon}")
-		
+                        if markerID not in splashed_enemies:
+                            water_shooter.shoot()
+                            splashed_enemies.append(markerID)
+                            initial_time = time.time()
+                            while (time.time() - initial_time <= 2 ):
+                                pass
+                            water_shooter.stop_shooting()
+                            # lat, lon, time_v = get_lat_long()
+                            #print(f"RTXDC_2024_UPRM_LIDRON_UAV_WaterBlast!_{markerID}_{time_v}_{lat}_{lon}")
+                        else:
+                            water_shooter.stop_shooting()
+
+
             
         key = cv2.waitKey(1) & 0xFF
 	    # if the `q` key was pressed, break from the loop
