@@ -1,9 +1,12 @@
 from pymavlink import mavutil
-
+import time
 class RC:
     def __init__(self):
-        self.mav = mavutil.mavlink_connection('/dev/ttyAMA0', baud = 57600)  # Adjust the IP and port as necessary
-    
+        self.mav = mavutil.mavlink_connection('/dev/tty.usbserial-DA00CBH4', baud=115200) # Adjust the IP and port as necessary
+        print("Waiting for heartbeat...")
+        # self.mav.wait_heartbeat(timeout=5)
+        print(f"Heartbeat received from system {self.mav.target_system}, component {self.mav.target_component}")
+
     def arm(self):
         self.mav.mav.command_long_send(
             self.mav.target_system, self.mav.target_component,
@@ -29,12 +32,31 @@ class RC:
             0, 0, 0, 0, 0  # Parameters 4-8 (ignored)
         )
 
+    # def check_gps_status(self): 
+    #     print("Checking GPS status...")
+    #     start = time.time()
+    #     while time.time() - start < 10:
+    #         try:
+    #             msg = self.mav.recv_match(type='GPS_RAW_INT', blocking=True, timeout=2)
+    #         except Exception as e:
+    #             print(f"Serial error: {e}")
+    #             return False
+
+    #         if msg:
+    #             print(f"Fix Type: {msg.fix_type} | Satellites: {msg.satellites_visible}")
+    #             if msg.fix_type >= 3:
+    #                 print("GPS fix acquired.")
+    #                 return True
+    #         else:
+    #             print("Waiting for GPS message...")
+    #     print("GPS fix not acquired.")
+    #     return False
+
     def get_position(self):
         # Request global position information
         self.mav.mav.request_data_stream_send(
             self.mav.target_system, self.mav.target_component,
             mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1, 1)  # Request position data at 1 Hz
-
         # Wait for the global position message
         while True:
             msg = self.mav.recv_match(type=['GLOBAL_POSITION_INT'], blocking=True)

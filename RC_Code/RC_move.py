@@ -5,9 +5,12 @@ import rc
 rc = rc.RC()
 print("Connected")
 
-rc.arm()
+print(rc.arm())
 print("Arm succesfully")
 
+# if not rc.check_gps_status():
+#     print("Exiting: Error - No GPS fix.")
+#     exit()
 
 # Current location and new location
 pos = rc.get_position()
