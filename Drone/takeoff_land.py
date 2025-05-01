@@ -59,11 +59,11 @@ async def main():
     from waypoint import Waypoint
 
     drone = Drone()
-     
+
     # Real-world GPS coordinates converted from DMS (Degrees, Minutes, Seconds)
-    wp1 = Waypoint(18.213056, -67.145000, 10)  # Waypoint 1
-    wp2 = Waypoint(18.212778, -67.144444, 10)  # Waypoint 2
-    wp3 = Waypoint(18.212778, -67.145278, 10)  # Waypoint 3
+    wp1 = Waypoint(18.207778, -67.141111, 10)
+    wp2 = Waypoint(18.207500, -67.141111, 10)
+    wp3 = Waypoint(18.207778, -67.140833, 10)
 
     # Waypoint list in reverse order since we're using .pop()
     drone.waypoint_list = [wp1, wp3, wp2, wp1]  # Return to wp1 at the end
