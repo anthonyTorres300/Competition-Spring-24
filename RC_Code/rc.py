@@ -2,87 +2,93 @@ from pymavlink import mavutil
 import time
 class RC:
     def __init__(self):
-        self.mav = mavutil.mavlink_connection('/dev/tty.usbserial-DA00CBH4', baud=115200) # Adjust the IP and port as necessary
-        print("Waiting for heartbeat...")
-        # self.mav.wait_heartbeat(timeout=5)
-        print(f"Heartbeat received from system {self.mav.target_system}, component {self.mav.target_component}")
+        self.mav = mavutil.mavlink_connection('COM4', baud=115200)
+        print("Listening for MAVLink messages on Windows...")
+
+        start_time = time.time()
+        heartbeat_received = False
+
+        while time.time() - start_time < 10:
+            msg = self.mav.recv_match(blocking=False)
+            if msg:
+                msg_type = msg.get_type()
+                print(f"Received: {msg_type}")
+                if msg_type == 'HEARTBEAT':
+                    heartbeat_received = True
+                    self.target_system = msg.get_srcSystem()
+                    self.target_component = msg.get_srcComponent()
+                    print(f"Heartbeat received from system {self.target_system}, component {self.target_component}")
+                    break
+            time.sleep(0.1)
+
+        if not heartbeat_received:
+            raise TimeoutError("Timeout: No heartbeat received from the flight controller.")
+
+        self.mav.target_system = self.target_system
+        self.mav.target_component = self.target_component
 
     def arm(self):
+        print("Arming vehicle...")
         self.mav.mav.command_long_send(
             self.mav.target_system, self.mav.target_component,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
             0, 1, 0, 0, 0, 0, 0, 0
-            )
-        
+        )
+
     def disarm(self):
+        print("Disarming vehicle...")
         self.mav.mav.command_long_send(
             self.mav.target_system, self.mav.target_component,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
             0, 0, 0, 0, 0, 0, 0, 0
         )
-    def set_speed(self, speed):
-        # Speed is in meters per second
-        self.mav.mav.command_long_send(
-            self.mav.target_system, self.mav.target_component,
-            mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
-            0,       # Confirmation
-            1,       # Speed type (1 for ground speed)
-            speed,   # Speed (m/s)
-            -1,      # Throttle (ignored)
-            0, 0, 0, 0, 0  # Parameters 4-8 (ignored)
-        )
-
-    # def check_gps_status(self): 
-    #     print("Checking GPS status...")
-    #     start = time.time()
-    #     while time.time() - start < 10:
-    #         try:
-    #             msg = self.mav.recv_match(type='GPS_RAW_INT', blocking=True, timeout=2)
-    #         except Exception as e:
-    #             print(f"Serial error: {e}")
-    #             return False
-
-    #         if msg:
-    #             print(f"Fix Type: {msg.fix_type} | Satellites: {msg.satellites_visible}")
-    #             if msg.fix_type >= 3:
-    #                 print("GPS fix acquired.")
-    #                 return True
-    #         else:
-    #             print("Waiting for GPS message...")
-    #     print("GPS fix not acquired.")
-    #     return False
 
     def get_position(self):
-        # Request global position information
         self.mav.mav.request_data_stream_send(
             self.mav.target_system, self.mav.target_component,
-            mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1, 1)  # Request position data at 1 Hz
-        # Wait for the global position message
+            mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1, 1)
+
         while True:
-            msg = self.mav.recv_match(type=['GLOBAL_POSITION_INT'], blocking=True)
-            if msg is not None:
-                # Convert latitude and longitude to degrees
+            msg = self.mav.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
+            if msg:
                 lat = msg.lat / 1e7
                 lon = msg.lon / 1e7
+                return lat, lon
+
+def mission_mode(self, waypoints):
+    self.mav.mav.mission_clear_all_send(self.mav.target_system, self.mav.target_component)
+    time.sleep(1)
+
+    print(f"Uploading {len(waypoints)} waypoint(s)...")
+    self.mav.mav.mission_count_send(self.mav.target_system, self.mav.target_component, len(waypoints))
+
+    for i, (lat, lon) in enumerate(waypoints):
+        alt = 0.0  # Since this is just a RC Car altitude is not used but it's required for the mav command
+
+        while True:
+            msg = self.mav.recv_match(type='MISSION_REQUEST', blocking=True, timeout=10)
+            if msg and msg.seq == i:
                 break
-        return lat, lon
 
-    def send_waypoint(self, lat, lon):
-        msg = mavutil.mavlink.MAVLink_mission_item_message(
-            self.mav.target_system, self.mav.target_component,
-            0,                      # Sequence
-            mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        self.mav.mav.mission_item_send(
+            self.mav.target_system,
+            self.mav.target_component,
+            i,  # sequence
+            mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,  # still needed even if alt is ignored
             mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-            0,                      # Current
-            0,                      # Autocontinue
-            0,                      # Param 1 (Hold time in seconds)
-            0,                      # Param 2 (Acceptance radius in meters)
-            0,                      # Param 3 (Pass through to waypoint)
-            0,                      # Param 4 (Yaw angle)
-            lat,                    # Latitude
-            lon,                    # Longitude
-            0)                    # Altitude
+            0,  # current
+            1,  # autocontinue
+            0, 0, 0, 0,  # params 1-4 (unused here)
+            lat, lon, alt  # lat, lon, alt
+        )
+        print(f"Sent waypoint {i}: ({lat}, {lon})")
 
-        # pos = self.get_position()
-        self.mav.mav.send(msg)
-        # print("YES")
+    print("Starting mission...")
+    self.mav.mav.command_long_send(
+        self.mav.target_system,
+        self.mav.target_component,
+        mavutil.mavlink.MAV_CMD_MISSION_START,
+        0,  # confirmation
+        0, 0, 0, 0, 0, 0  # unused params
+    )
+

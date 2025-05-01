@@ -5,6 +5,7 @@ import rc
 rc = rc.RC()
 print("Connected")
 
+
 print(rc.arm())
 print("Arm succesfully")
 
@@ -25,6 +26,13 @@ new_lon = lon + 1.0
 rc.send_waypoint(new_lat, new_lon)
 # print("Move from: ", lat, lon, "to: ", new_pos[0], new_pos[1])
 
+waypoints = [
+    (18.4655, -66.1057, 0.0),  # San Juan, PR
+    (18.4700, -66.1100, 0.0),  # Second point
+    (18.4750, -66.1150, 0.0),  # Third point
+]
+
+rc.mission_mode(waypoints)
 
 # Run forward for 5 seconds
 time.sleep(10)
