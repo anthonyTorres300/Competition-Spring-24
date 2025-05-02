@@ -1,14 +1,18 @@
 from mavsdk import System
 from mavsdk.offboard import (OffboardError, PositionNedYaw)
 import asyncio
+
 from waypoint import Waypoint
+from geofence import GeoFence
 
 class Drone :
-    def __init__(self, system_address="serial:///dev/ttyAMA10:57600"):
-        # Initialize the drone's MAVSDK system and waypoint list
+    # Initialize the drone's MAVSDK system and waypoint list
+    def __init__(self, system_address="serial:///dev/ttyAMA10:57600"): 
         self.system_address = system_address
         self.drone = System()
+
         self.waypoint_list = []
+        self.geofence = GeoFence(18.2074, 18.2080, -67.1412, -67.1408, 10) # Setting the bounds of the GeoFence
     
     async def connect(self): # Connect to the drone via MAVLink
         await self.drone.connect(self.system_address)
@@ -38,13 +42,15 @@ class Drone :
         #async 
         while (self.waypoint_list): # Loop while there are still waypoints in the list
             wp = self.waypoint_list.pop() # Get the next waypoint
-            await self.drone.action.goto_location(  # Go to specific GPS location (latitude, longitude, altitude)
-                wp.lat, wp.lon, 
-                self.drone.action.get_takeoff_altitude(),0)
-            await self.drone.action.hold() # Pause at the waypoint when reaches
+            if not self.geofence.is_within_bounds(wp):  # This checks if the waypoint is out of bounds
+                print("The Waypoint is outside of the geofence!")
+                continue
+            await self.drone.action.goto_location(wp.lat, wp.lon, wp.alt, 0)
+            print(f"Going to {wp.lat}, {wp.lon}, {wp.alt}")
             await asyncio.sleep(10) 
         await self.drone.action.land() #Land the drone after completing the waypoints
-            
+        print("Landing...")    
+
     #         await self.drone.action.goto_location(waypoint.waypoint.lat,waypoint.waypoint.lon,waypoint.waypoint.alt)
     async def print_altitude(self):
         print(f"Print altitude recieved")
@@ -60,11 +66,17 @@ async def main():
 
     drone = Drone()
 
-    wp1 = Waypoint(18.207778, -67.141111, 5)
-    wp2 = Waypoint(18.207500, -67.141111, 5)
-    wp3 = Waypoint(18.207778, -67.140833, 5)
+    # Central point
+    lat_base = 18.209722
+    lon_base = -67.139444
 
-    drone.waypoint_list = [wp1, wp3, wp2, wp1] 
+    # Approx. 2 meters apart
+    wp1 = Waypoint(lat_base, lon_base, 10)                         # Original point
+    wp2 = Waypoint(lat_base + 0.000015, lon_base, 10)              # ≈ 1.6m north
+    wp3 = Waypoint(lat_base, lon_base + 0.000015, 10)              # ≈ 1.4m east
+    wp4 = Waypoint(lat_base - 0.000015, lon_base - 0.000015, 10)   # ≈ 2m southwest
+
+    drone.waypoint_list = [wp4, wp3, wp2, wp1]  # Reverse order if using pop()
 
     await drone.connect()
     await drone.arm()
