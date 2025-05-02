@@ -4,7 +4,7 @@ import asyncio
 import waypoint # Importing the waypoint class 
 
 class Drone :
-    def __init__(self, system_address="serial:///dev/ttyAMA0:921600"):
+    def __init__(self, system_address="serial:///dev/ttyAMA10:57600"):
         # Initialize the drone's MAVSDK system and waypoint list
         self.system_address = system_address
         self.drone = System()
@@ -61,9 +61,9 @@ async def main():
     drone = Drone()
 
     # Real-world GPS coordinates converted from DMS (Degrees, Minutes, Seconds)
-    wp1 = Waypoint(18.207778, -67.141111, 10)
-    wp2 = Waypoint(18.207500, -67.141111, 10)
-    wp3 = Waypoint(18.207778, -67.140833, 10)
+    wp1 = Waypoint(18.207778, -67.141111, 5)
+    wp2 = Waypoint(18.207778, -67.141111, 5)
+    wp3 = Waypoint(18.207778, -67.140833, 5)
 
     # Waypoint list in reverse order since we're using .pop()
     drone.waypoint_list = [wp1, wp3, wp2, wp1]  # Return to wp1 at the end
