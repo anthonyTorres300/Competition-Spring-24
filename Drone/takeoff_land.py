@@ -54,7 +54,7 @@ class Drone :
    # Execute a flight plan by visiting waypoints one by one
     async def execute(self):
         while self.waypoint_list:
-            wp = self.waypoint_list.pop()
+            wp = self.waypoint_list.pop() 
             alt = await self.drone.action.get_takeoff_altitude()
             await self.drone.action.goto_location(wp.lat, wp.lon, wp.alt, 0)
             print(f"Going to {wp.lat}, {wp.lon}, {alt}")
