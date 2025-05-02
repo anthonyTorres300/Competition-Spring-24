@@ -7,12 +7,12 @@ from geofence import GeoFence
 
 class Drone :
     # Initialize the drone's MAVSDK system and waypoint list
-    def __init__(self, system_address="serial:///dev/ttyAMA10:57600"): 
+    def __init__(self, system_address="serial:///dev/ttyAMA0:57600"): 
         self.system_address = system_address
         self.drone = System()
 
-        self.waypoint_list = []
-        self.geofence = GeoFence(18.2074, 18.2080, -67.1412, -67.1408, 10) # Setting the bounds of the GeoFence
+        self.waypoint_list = [] 
+        # self.geofence = GeoFence(18.2074, 18.2080, -67.1412, -67.1408, 10)
     
     async def connect(self): # Connect to the drone via MAVLink
         await self.drone.connect(self.system_address)
@@ -38,20 +38,34 @@ class Drone :
         await self.drone.action.takeoff()
         await asyncio.sleep(10) # Wait for the drone to stabilize in the air
         
-    async def execute(self): # The execution of the flight plan by visiting the waypoints one by one
-        #async 
-        while (self.waypoint_list): # Loop while there are still waypoints in the list
-            wp = self.waypoint_list.pop() # Get the next waypoint
-            if not self.geofence.is_within_bounds(wp):  # This checks if the waypoint is out of bounds
-                print("The Waypoint is outside of the geofence!")
-                continue
-            await self.drone.action.goto_location(wp.lat, wp.lon, wp.alt, 0)
-            print(f"Going to {wp.lat}, {wp.lon}, {wp.alt}")
-            await asyncio.sleep(10) 
-        await self.drone.action.land() #Land the drone after completing the waypoints
-        print("Landing...")    
+    # async def execute(self): # The execution of the flight plan by visiting the waypoints one by one
+    #     #async 
+    #     while (self.waypoint_list): # Loop while there are still waypoints in the list
+    #         wp = self.waypoint_list.pop() # Get the next waypoint
+    #         if not self.geofence.is_within_bounds(wp):  # This checks if the waypoint is out of bounds
+    #             print("The Waypoint is outside of the geofence!")
+    #             continue
+    #         await self.drone.action.goto_location(wp.lat, wp.lon, wp.alt, 0)
+    #         print(f"Going to {wp.lat}, {wp.lon}, {wp.alt}")
+    #         await asyncio.sleep(10) 
+    #     await self.drone.action.land() #Land the drone after completing the waypoints
+    #     print("Landing...")    
 
-    #         await self.drone.action.goto_location(waypoint.waypoint.lat,waypoint.waypoint.lon,waypoint.waypoint.alt)
+   # Execute a flight plan by visiting waypoints one by one
+    async def execute(self):
+        # Loop while there are still waypoints in the list
+        while self.waypoint_list:
+            wp = self.waypoint_list.pop()  # Get the next waypoint
+            # Go to specified GPS location (latitude, longitude, altitude)
+            await self.drone.action.goto_location(
+                wp.lat, wp.lon,
+                self.drone.action.get_takeoff_altitude(), 0  # Altitude and yaw (direction)
+            )
+            await self.drone.action.hold()  # Pause at waypoint
+            await asyncio.sleep(10)  # Wait to simulate holding position
+        await self.drone.action.land()  # Land the drone after completing waypoints
+
+    # await self.drone.action.goto_location(waypoint.waypoint.lat,waypoint.waypoint.lon,waypoint.waypoint.alt)
     async def print_altitude(self):
         print(f"Print altitude recieved")
         await self.connect()
