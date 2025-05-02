@@ -33,7 +33,7 @@ class Drone :
         print("Drone disarmed")
 
     async def takeoff(self):  # Take off and reach a preset altitude
-        await self.drone.action.set_takeoff_altitude(10.0)  # Start at 10 meters
+        await self.drone.action.set_takeoff_altitude(5.0)  # Start at 10 meters
         print("Taking off")
         await self.drone.action.takeoff()
         await asyncio.sleep(10)  # Wait to stabilize in the air
@@ -82,10 +82,10 @@ async def main():
     lat_base = 18.209722
     lon_base = -67.139444
 
-    wp1 = Waypoint(lat_base, lon_base, 10)
-    wp2 = Waypoint(lat_base + 0.000015, lon_base, 10)
-    wp3 = Waypoint(lat_base, lon_base + 0.000015, 10)
-    wp4 = Waypoint(lat_base - 0.000015, lon_base - 0.000015, 10)
+    wp1 = Waypoint(lat_base, lon_base, 5)
+    wp2 = Waypoint(lat_base + 0.000015, lon_base, 5)
+    wp3 = Waypoint(lat_base, lon_base + 0.000015, 5)
+    wp4 = Waypoint(lat_base - 0.000015, lon_base - 0.000015, 5)
 
     drone.waypoint_list = [wp4, wp3, wp2, wp1]  # Reverse order if using pop()
 
