@@ -32,11 +32,11 @@ class Drone :
         await self.drone.action.disarm()
         print("Drone disarmed")
 
-    async def takeoff(self): # Take off and reach a preset altitude (in this case it's 2 meters)
-        await self.drone.action.set_takeoff_altitude(2.0) #Sets the desired takeoff altitude in meters (can be tweaked later)
+    async def takeoff(self):  # Take off and reach a preset altitude
+        await self.drone.action.set_takeoff_altitude(10.0)  # Start at 10 meters
         print("Taking off")
         await self.drone.action.takeoff()
-        await asyncio.sleep(10) # Wait for the drone to stabilize in the air
+        await asyncio.sleep(10)  # Wait to stabilize in the air
         
     # async def execute(self): # The execution of the flight plan by visiting the waypoints one by one
     #     #async 
@@ -53,17 +53,15 @@ class Drone :
 
    # Execute a flight plan by visiting waypoints one by one
     async def execute(self):
-        # Loop while there are still waypoints in the list
         while self.waypoint_list:
-            wp = self.waypoint_list.pop()  # Get the next waypoint
-            # Go to specified GPS location (latitude, longitude, altitude)
-            await self.drone.action.goto_location(
-                wp.lat, wp.lon,
-                self.drone.action.get_takeoff_altitude(), 0  # Altitude and yaw (direction)
-            )
-            await self.drone.action.hold()  # Pause at waypoint
-            await asyncio.sleep(10)  # Wait to simulate holding position
-        await self.drone.action.land()  # Land the drone after completing waypoints
+            wp = self.waypoint_list.pop()
+            alt = await self.drone.action.get_takeoff_altitude()
+            await self.drone.action.goto_location(wp.lat, wp.lon, alt, 0)
+            print(f"Going to {wp.lat}, {wp.lon}, {alt}")
+            await self.drone.action.hold()
+            await asyncio.sleep(10)
+        await self.drone.action.land()
+        print("Landing...")
 
     # await self.drone.action.goto_location(waypoint.waypoint.lat,waypoint.waypoint.lon,waypoint.waypoint.alt)
     async def print_altitude(self):
