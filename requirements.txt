@@ -1,0 +1,8 @@
+future==1.0.0
+grpcio==1.71.0
+iso8601==2.1.0
+mavsdk==3.0.1
+protobuf==6.30.2
+pymavlink==2.4.43
+pyserial==3.5
+PyYAML==6.0.2
