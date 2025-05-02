@@ -85,10 +85,10 @@ async def main():
     lon_base = -67.139444
 
     # Approx. 2 meters apart
-    wp1 = Waypoint(lat_base, lon_base, 10)                         # Original point
-    wp2 = Waypoint(lat_base + 0.000015, lon_base, 10)              # ≈ 1.6m north
-    wp3 = Waypoint(lat_base, lon_base + 0.000015, 10)              # ≈ 1.4m east
-    wp4 = Waypoint(lat_base - 0.000015, lon_base - 0.000015, 10)   # ≈ 2m southwest
+    wp1 = Waypoint(lat_base, lon_base, 25)                         # Original point
+    wp2 = Waypoint(lat_base + 0.000015, lon_base, 25)              # ≈ 1.6m north
+    wp3 = Waypoint(lat_base, lon_base + 0.000015, 25)              # ≈ 1.4m east
+    wp4 = Waypoint(lat_base - 0.000015, lon_base - 0.000015, 25)   # ≈ 2m southwest
 
     drone.waypoint_list = [wp4, wp3, wp2, wp1]  # Reverse order if using pop()
 
